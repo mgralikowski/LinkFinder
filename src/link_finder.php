@@ -204,21 +204,21 @@ class LinkFinder{
 		$this->__replaces = array();
 
 		// Data for patterns
-		$url_allowed_chars = "[-a-zA-Z0-9@:%_+.~#?&\\/=;\[\]]"; // According to https://stackoverflow.com/questions/1547899/which-characters-make-a-url-invalid/1547940#1547940 there are yet more characters: !$'()*`,
-		$domain_name_part = "[a-zA-Z0-9][-a-zA-Z0-9]+"; // without dot
+		$url_allowed_chars = "[-a-zA-Z0-9@:%_+.~#?&\\/=;\[\]$!]"; // According to https://stackoverflow.com/questions/1547899/which-characters-make-a-url-invalid/1547940#1547940 there are yet more characters: '()*`,
+		$domain_name_part = "[a-zA-Z0-9][-a-zA-Z0-9]*"; // without dot, domain name part can be just 1 character long
 		$optional_port = "(:[1-9][0-9]{1,4}|)"; // ":81", ":65535", ""
 		$top_level_domains = "(".join("|",$this->top_level_domains).")";
 		$username_chars = "[-a-zA-Z0-9%]+";
 		$password_chars = $username_chars;
 
-		// urls starting with http://, http://, ftp:/ and containing username and password
+		// urls starting with http://, https://, ftp:/ and containing username and password
 		$text = preg_replace_callback("/(?<first_char>.?)\b(?<link>(ftp|https?):\\/\\/$username_chars:$password_chars@$domain_name_part(\.$domain_name_part)*$optional_port(\/$url_allowed_chars*|))/i$utf8",array($this,"_replaceLink"),$text);
 		if(strlen($text)==0){
 			// perhaps there is an invalid UTF-8 char in $text
 			return $text_orig;
 		}
 
-		// urls starting with http://, http://, ftp:/
+		// urls starting with http://, https://, ftp:/
 		$text = preg_replace_callback("/(?<first_char>.?)\b(?<link>(ftp|https?):\\/\\/$domain_name_part(\.$domain_name_part)*$optional_port(\/$url_allowed_chars*|))/i$utf8",array($this,"_replaceLink"),$text);
 
 		// urls starting with www.
@@ -373,7 +373,7 @@ class LinkFinder{
 
 		$tail = "";
 
-		if(preg_match("/^(.+?)([.,;]+)$/",$key,$_matches)){ // dot(s) at the of a link - it probably means end of the sentence
+		if(preg_match("/^(.+?)([.,;!]+)$/",$key,$_matches)){ // dot(s) at the of a link - it probably means end of the sentence
 			$key = $_matches[1];
 			$tail = $_matches[2];
 		}
