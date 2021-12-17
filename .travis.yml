@@ -11,7 +11,7 @@ dist: trusty
 language: php
 
 php:
-  - 5.3
+#  - 5.3 # needs precise
   - 5.4
   - 5.5
 
