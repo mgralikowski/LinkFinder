@@ -3,6 +3,24 @@ All notable changes to LinkFinder will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.7] 2022-02-27
+
+* 4c214d0 - Added some more popular generic top-level domains
+
+## [2.7.6] 2022-02-14
+
+* 16b2ae1 - Resolved issue with HTML entities
+
+## [2.7.5] 2021-12-20
+
+* ce2cec3 - Fixed false detection of URLs
+
+## [2.7.4] 2021-12-17
+
+* 85317e4 - URLs and emails in parentheses are correctly recognized (e.g. _[http://www.example.com/]_, [http://www.example.com/]:)
+* 9497b22 - Proper recognition of URLs with URI starting with question mark (e.g. www.example.com?page=1)
+* db545ab - The asterisk is considered a valid character in the URI
+
 ## [2.7.3] 2021-11-23
 * 1b1bd38 - Proper detection of URLs with email in URI part (e.g www.example.com/unsubscribe/john@doe.com/)
 

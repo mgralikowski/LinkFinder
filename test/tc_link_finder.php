@@ -88,22 +88,6 @@ or <a href="mailto:we@earth.net">we@earth.net</a></p>',$lfinder->process($src,ar
 		// URL with username and password
 		$src = 'Development preview is at http://preview:project123@project.preview.example.org/';
 		$this->assertEquals('Development preview is at <a href="http://preview:project123@project.preview.example.org/">http://preview:project123@project.preview.example.org/</a>',$lfinder->process($src));
-
- 		// invalid utf-8 char
-		$invalid_char = chr(200);
-		$src = "Lorem$invalid_char www.ipsum.com. dolor@sit.net. Thank you";
-		$this->assertEquals(
-			"Lorem$invalid_char www.ipsum.com. dolor@sit.net. Thank you",
-			$lfinder->process($src)
-		);
-		//
-		$invalid_char = chr(200);
-		$src = "Lorem$invalid_char <www.ipsum.com>. dolor@sit.net. Thank you";
-		$this->assertEquals(
-			"Lorem$invalid_char &lt;www.ipsum.com&gt;. dolor@sit.net. Thank you",
-			$lfinder->process($src)
-		);
-
 	}
 
 	function testOptions(){
@@ -263,6 +247,14 @@ or <a href="mailto:we@earth.net">we@earth.net</a></p>',$lfinder->process($src,ar
 			"https://e.targito.com/c?a=1b4cba18-09e1-49c6-8933-7fadbe8e7395&o=atk14net&m=0725cccc-e58b-46f5-86ee-36c9c5ee7ddb" => "https://e.targito.com/c?a=1b4cba18-09e1-49c6-8933-7fadbe8e7395&o=atk14net&m=0725cccc-e58b-46f5-86ee-36c9c5ee7ddb",
 
 			"mill.cz/_cs/mailing/online/test@example.com/afb359b921a75f8a90fa6a5c0ffb5671/000001.htm" => "http://mill.cz/_cs/mailing/online/test@example.com/afb359b921a75f8a90fa6a5c0ffb5671/000001.htm",
+
+			// URLs with asterisk
+			"http://wayback.archive.org/web/*/http://google.com" => "http://wayback.archive.org/web/*/http://google.com",
+			"example.com/K/Ko%c4%8dka*Testovac%c3%ad*CZ1252156***19100101*CO01*2*2*20210118*20210118*V1CZ00024341250212071710463" => "http://example.com/K/Ko%c4%8dka*Testovac%c3%ad*CZ1252156***19100101*CO01*2*2*20210118*20210118*V1CZ00024341250212071710463",
+
+			// no slash before question mark
+			"https://example.com?utm_source=Newsletter+Pro&utm_campaign=046f656a38-EMAIL_CAMPAIGN_2018_01_03_COPY_01" => "https://example.com?utm_source=Newsletter+Pro&utm_campaign=046f656a38-EMAIL_CAMPAIGN_2018_01_03_COPY_01",
+			"example.com?utm_source=Newsletter+Pro&utm_campaign=046f656a38-EMAIL_CAMPAIGN_2018_01_03_COPY_01" => "http://example.com?utm_source=Newsletter+Pro&utm_campaign=046f656a38-EMAIL_CAMPAIGN_2018_01_03_COPY_01",
 		);
 
 		$templates = array(
@@ -285,12 +277,25 @@ or <a href="mailto:we@earth.net">we@earth.net</a></p>',$lfinder->process($src,ar
 			"Angled Brackets <%s>, Nice!",
 			"Angled Brackets <%s>; Nice!",
 			"Angled Brackets <%s>. Nice!",
+			//
 			"Square Brackets [%s]",
 			"Square Brackets [%s], Nice!",
+			"Square Brackets, italic _[%s]_",
+			"Square Brackets, italic _[%s]_, Nice!",
+			//
+			"Brackets (%s)",
+			"Brackets (%s), Nice!",
+			"Brackets, italic _(%s)_",
+			"Brackets, italic _(%s)_, Nice!",
+			//
 			"Braces {%s}",
 			"Braces {%s}, Nice!",
 			"Braces {%s}; Nice!",
 			"Braces {%s}. Nice!",
+			"Braces, italic _{%s}_",
+			"Braces, italic _{%s}_, Nice!",
+			"Braces, italic _{%s}_; Nice!",
+			"Braces, italic _{%s}_. Nice!",
 		);
 
 		$lfinder = new LinkFinder();
@@ -325,7 +330,9 @@ or <a href="mailto:we@earth.net">we@earth.net</a></p>',$lfinder->process($src,ar
 			"/var/www/app.com/index.html",
 			"/var/www/www.app.com/index.html",
 			'.example.com',
-			'.www.example.com'
+			'.www.example.com',
+			'Dostali jsme žádost o reset vašeho Facebook hesla.Zadejte tento kód pro reset', // hesla.Za
+			'Bolí vás r-a.mena a krk' // r-a.me
 		);
 
 		$lfinder = new LinkFinder();
@@ -394,5 +401,33 @@ e-shopu</a>';
 		$this->assertEquals('Zatím ve dvou barvách &lt;a
 href=&quot;<a href="https://www.mill.cz/vyhledavani/vyhledej.htm?search=irbis">https://www.mill.cz/vyhledavani/vyhledej.htm?search=irbis</a>&quot;&gt;v našem
 e-shopu&lt;/a&gt;',$lfinder->process($src));
+	}
+
+	function testIssueHtmlEntity(){
+		$src = '<p>Pages about the original Markdown can be found at https://daringfireball.net/projects/markdown/.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#8617;&#xFE0E;</a></p>';
+		$lfinder = new LinkFinder();
+		$this->assertEquals('<p>Pages about the original Markdown can be found at <a href="https://daringfireball.net/projects/markdown/">https://daringfireball.net/projects/markdown/</a>.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#8617;&#xFE0E;</a></p>',$lfinder->processHtml($src));
+
+		$src = '<p>URL1: http://www.example.com/&#xFE0E; URL2: http://www.example.com/page.html&#8617;</p>';
+		$lfinder = new LinkFinder();
+		$this->assertEquals('<p>URL1: <a href="http://www.example.com/">http://www.example.com/</a>&#xFE0E; URL2: <a href="http://www.example.com/page.html">http://www.example.com/page.html</a>&#8617;</p>',$lfinder->processHtml($src));
+	}
+
+	function test_invalid_utf8_char(){
+		$lfinder = new LinkFinder();
+
+		$invalid_char = chr(200);
+		$src = "Lorem$invalid_char www.ipsum.com. dolor@sit.net. Thank you";
+		$this->assertEquals(
+			$src,
+			$lfinder->process($src)
+		);
+		//
+		$invalid_char = chr(200);
+		$src = "Lorem$invalid_char <www.ipsum.com>. dolor@sit.net. Thank you";
+		$this->assertEquals(
+			"Lorem$invalid_char &lt;www.ipsum.com&gt;. dolor@sit.net. Thank you",
+			$lfinder->process($src)
+		);
 	}
 }
